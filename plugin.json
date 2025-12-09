@@ -1,0 +1,102 @@
+{
+  "id": "c92f2b74-7f4a-4e06-9c4a-5f4a1f4c9e10",
+  "uuid": "c92f2b74-7f4a-4e06-9c4a-5f4a1f4c9e10",
+  "title": "AG ClickUp (AG-SYSTEM)",
+  "iconURL": "https://ag-group-ai.typingcloud.com/icon.png",
+  "createdAt": "2025-12-09T00:00:00.000Z",
+  "githubURL": "https://github.com/Avivglam/AG-ClickUp-Plugin",
+  "overviewMarkdown": "## AG-SYSTEM ClickUp Integration\n\nThis plugin connects AG-SYSTEM agents (primarily **AG-Tasks**, with read-only access for AG-Residents, AG-Finance and AG-CRM-Bridge) to your ClickUp workspace over HTTPS.\n\nCapabilities:\n- List tasks from a specific ClickUp list (for boards / projects managed by AG-Tasks).\n- Create new tasks into a ClickUp list on behalf of AG-SYSTEM flows.\n\nSecurity:\n- Uses a user-provided **ClickUp API token** stored as a secret in TypingMind user settings.\n- Token is sent only to ClickUp's `api.clickup.com` endpoint over HTTPS.\n- The plugin stores no task data server-side; AG-SYSTEM agents only see responses inside the current chat.\n\nTo use: open the plugin settings, paste your ClickUp Personal API token, and provide ClickUp list IDs whenever AG-Tasks asks for them.\n",
+  "authenticationType": "AUTH_TYPE_API_KEY",
+  "permissions": [
+    "read_user_message"
+  ],
+  "userSettings": [
+    [
+      {
+        "name": "apiKey",
+        "type": "password",
+        "label": "ClickUp API Key",
+        "description": "Your ClickUp personal API token (starts with `pk_...`). Stored encrypted; used only for HTTPS calls to api.clickup.com.",
+        "required": true
+      }
+    ]
+  ],
+  "dynamicContextEndpoints": [],
+  "pluginFunctions": [
+    {
+      "id": "8a6308a4-1bb5-4d94-972f-0c6b9b8e5d11",
+      "name": "clickup_list_tasks",
+      "implementationType": "http",
+      "outputType": "respond_to_ai",
+      "httpAction": {
+        "id": "f4b8c3f3-42a0-4c9b-9f6e-6a93df4f61f2",
+        "url": "https://api.clickup.com/api/v2/list/{list_id}/task",
+        "name": "List tasks from ClickUp list",
+        "method": "GET",
+        "hasBody": false,
+        "hasHeaders": true,
+        "requestBody": "",
+        "requestHeaders": "{\n  \"Authorization\": \"Bearer {apiKey}\"\n}"
+      },
+      "openaiSpec": {
+        "name": "clickup_list_tasks",
+        "description": "Fetch tasks from a specific ClickUp list for AG-Tasks and other AG-SYSTEM agents.",
+        "parameters": {
+          "type": "object",
+          "required": [
+            "list_id"
+          ],
+          "properties": {
+            "list_id": {
+              "type": "string",
+              "description": "ClickUp list ID to fetch tasks from (visible in ClickUp list settings / URL)."
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "a69b9eeb-0b63-4c2a-8b93-6c6a0f7ab1c4",
+      "name": "clickup_create_task",
+      "implementationType": "http",
+      "outputType": "respond_to_ai",
+      "httpAction": {
+        "id": "e6f99d3a-5a27-4e7e-b208-2c9b9f5c7e33",
+        "url": "https://api.clickup.com/api/v2/list/{list_id}/task",
+        "name": "Create ClickUp task",
+        "method": "POST",
+        "hasBody": true,
+        "hasHeaders": true,
+        "requestBody": "{\n  \"name\": \"{name}\",\n  \"description\": \"{description}\"\n}",
+        "requestHeaders": "{\n  \"Authorization\": \"Bearer {apiKey}\",\n  \"Content-Type\": \"application/json\"\n}",
+        "requestBodyFormat": "json"
+      },
+      "openaiSpec": {
+        "name": "clickup_create_task",
+        "description": "Create a new ClickUp task in a specific list on behalf of AG-SYSTEM agents (AG-Tasks, AG-CRM-Bridge, AG-Residents).",
+        "parameters": {
+          "type": "object",
+          "required": [
+            "list_id",
+            "name"
+          ],
+          "properties": {
+            "list_id": {
+              "type": "string",
+              "description": "ClickUp list ID where the task should be created."
+            },
+            "name": {
+              "type": "string",
+              "description": "Task title."
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional long description with project / resident context from AG-SYSTEM.",
+              "nullable": true
+            }
+          }
+        }
+      }
+    }
+  ]
+}
